@@ -18,7 +18,7 @@ const FoodPage = ({ params }: { params: { name: string } }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const { name } = await params;
+                const { name } = params;
 
                 const { data } = await axios.get(`/api/foods/${name}`);
                 console.log(name);
@@ -45,7 +45,7 @@ const FoodPage = ({ params }: { params: { name: string } }) => {
 
     return (
         <>
-            {!loading && food ? (
+            {!loading && food && macronutrients ? (
                 <div className="p-8 text-white">
                     <Undo2
                         className="cursor-pointer mb-5 text-white"
