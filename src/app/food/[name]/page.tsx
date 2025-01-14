@@ -1,6 +1,5 @@
 "use client";
-import { IFood, IMacronutrientData } from "@/app/types";
-import axios from "axios";
+import { IFood, IMacronutrientData } from "@/app/types/index";
 import { Undo2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -9,43 +8,50 @@ import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 
 const FoodPage = ({ params }: { params: { name: string } }) => {
     const router = useRouter();
+
     const [food, setFood] = useState<IFood | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [macronutrients, setMacronutrients] = useState<IMacronutrientData[]>(
-        []
-    );
-    const COLORS = ["#0088FE", "#00C49F", "#FFBB28"];
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [macronutriments, setMacronutriments] = useState<
+        IMacronutrientData[]
+    >([]);
+
+    const COLORS = ["#F28907", "#5079F2", "#F2220F"];
+
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchFood = async () => {
             try {
-                const { name } = params;
+                const APIQueryURL = `/api/foods/${params.name}`;
+                const response = await fetch(APIQueryURL);
+                const data = await response.json();
 
-                const { data } = await axios.get(`/api/foods/${name}`);
-                console.log(name);
-
+                // Macronutriments
                 const macronutrimentsDatas: IMacronutrientData[] = [
                     { name: "carbohydrates", value: data.carbohydrates },
                     { name: "protein", value: data.protein },
                     { name: "fat", value: data.fat },
                 ];
 
-                setMacronutrients(macronutrimentsDatas);
-                setFood(data);
-                setLoading(false);
+                setMacronutriments(macronutrimentsDatas);
 
+                // Food General Informations
+                setFood(data);
                 console.log(data);
             } catch (error) {
-                console.log("pipi");
-
-                console.error(error);
+                console.log("Error fetching Food:", error);
+            } finally {
+                setIsLoading(false);
             }
         };
-        fetchData();
-    }, [params]);
+
+        const initialize = async () => {
+            await fetchFood();
+        };
+        initialize();
+    }, [params.name]);
 
     return (
         <>
-            {!loading && food && macronutrients ? (
+            {!isLoading && food && macronutriments ? (
                 <div className="p-8 text-white">
                     <Undo2
                         className="cursor-pointer mb-5 text-white"
@@ -59,7 +65,7 @@ const FoodPage = ({ params }: { params: { name: string } }) => {
                             <ResponsiveContainer width="100%" height={200}>
                                 <PieChart>
                                     <Pie
-                                        data={macronutrients}
+                                        data={macronutriments}
                                         cx="50%"
                                         cy="50%"
                                         innerRadius={60}
@@ -68,7 +74,7 @@ const FoodPage = ({ params }: { params: { name: string } }) => {
                                         paddingAngle={5}
                                         dataKey="value"
                                     >
-                                        {macronutrients.map((entry, index) => (
+                                        {macronutriments.map((entry, index) => (
                                             <Cell
                                                 key={`cell-${index}`}
                                                 fill={
@@ -82,7 +88,7 @@ const FoodPage = ({ params }: { params: { name: string } }) => {
                                 </PieChart>
                             </ResponsiveContainer>
                             <div className="text-center mt-4">
-                                <span className="inline-block w-3 h-3 bg-[#F28907] mr-2"></span>
+                                <span className="inline-block w-3 h-3 bg-[#F28907] mr-2"></span>{" "}
                                 Carbohydrates
                                 <span className="inline-block w-3 h-3 bg-[#5079F2] ml-4 mr-2"></span>{" "}
                                 Protein
@@ -135,7 +141,7 @@ const FoodPage = ({ params }: { params: { name: string } }) => {
                                         <span className="font-semibold">
                                             Vitamins:
                                         </span>{" "}
-                                        {food.vitamins}
+                                        {food.vitamins?.join(", ")}
                                     </div>
                                 </div>
                                 <div className="flex items-center">
@@ -149,7 +155,7 @@ const FoodPage = ({ params }: { params: { name: string } }) => {
                                         <span className="font-semibold">
                                             Minerals:
                                         </span>{" "}
-                                        {food.minerals}
+                                        {food.minerals?.join(", ")}
                                     </div>
                                 </div>
                             </div>
@@ -157,8 +163,8 @@ const FoodPage = ({ params }: { params: { name: string } }) => {
                     </div>
                 </div>
             ) : (
-                <div className="flex justify-center items-center h-screen text-white">
-                    <p className="text-2xl">Loading ..</p>
+                <div className="flex justify-center items-center h-screen">
+                    <p className="text-2xl text-white">Loading...</p>
                 </div>
             )}
         </>
